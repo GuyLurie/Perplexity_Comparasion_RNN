@@ -265,3 +265,35 @@ def train(model,train_x,train_y,val_x,val_y,batch_size,learning_rate, n_epoches,
       per_epoch_valid_losses.append(avarage_valid_loss)
       per_epoch_valid_perplexities.append(average_valid_perplexity)
     return per_epoch_train_losses, per_epoch_valid_losses, per_epoch_train_perplexities, per_epoch_valid_perplexities
+
+
+def evaluate(val_x, val_y, model, batch_size, device):
+    valid_losses = []
+    valid_perplexities_avarage = []
+    val_dataset = SequenceDataset(torch.from_numpy(val_x), torch.from_numpy(val_y), model.seq_length, batch_size)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
+    criterion = nn.CrossEntropyLoss()
+    criterion = criterion.to(device)
+    model.eval()
+    val_h = init_hidden(model,batch_size,model.n_layers,model.hidden_dim)
+    # Iterate throught validation data
+    for inputs, labels in val_loader:
+        # if inputs.shape[0] != batch_size or labels.shape[0] != batch_size:
+        #     continue
+        if model.rnn_type == "LSTM":
+          val_h = tuple([each.detach() for each in val_h])
+        elif model.rnn_type == "GRU":
+          val_h = val_h.detach()
+        inputs, labels = inputs.to(device), labels.to(device)
+        out, val_h = model(inputs, val_h)
+        labels = labels.view(-1)
+        val_loss = criterion(out, labels)
+        valid_losses.append(val_loss.item())
+
+        valid_perplexity = torch.exp(val_loss).item()
+        valid_perplexities_avarage.append(valid_perplexity)
+
+    # valid_losses.append(valid_loss/len(val_loader))
+    avarage_valid_loss = sum(valid_losses)/len(valid_losses)
+    average_valid_perplexity = sum(valid_perplexities_avarage)/len(valid_perplexities_avarage)
+    return average_valid_perplexity
