@@ -100,7 +100,7 @@ train_losses, val_losses, train_perplexities, val_perplexities =  HW2_utils.trai
 )
 ```
 
-## Evaluating
+## Evaluation
 Select your desired model. Choose the appropriate model checkpoint path and load the model. For example, to load an LSTM with dropout:
 
 ```python
@@ -132,36 +132,41 @@ n_epoches = 40
 seq_length = 35
 ```
 
-Ensure your input sequence x is preprocessed and tokenized to match the format used during training. For example:
-
-```python
-x = torch.randint(0, vocab_size, (batch_size, seq_length))  # Randomly generated example input
-x = x.to(device)
-
-# Initialize hidden state
-if rnn_type == "LSTM":
-    hidden = (torch.zeros(n_layers, batch_size, hidden_dim).to(device),
-              torch.zeros(n_layers, batch_size, hidden_dim).to(device))
-elif rnn_type == "GRU":
-    hidden = torch.zeros(n_layers, batch_size, hidden_dim).to(device)
-```
+Ensure your input sequence x is preprocessed and tokenized to match the format used during training
 
 Run the model on the input sequence and retrieve the output:
 ```python
-criterion = nn.CrossEntropyLoss()  # CrossEntropyLoss function
+checkpoint_paths = {
+    "LSTM_dropout_0.3": "models/checkpoints/LSTM_dropout_0.3/best_validation_model.pt",
+    "LSTM_no_dropout": "models/checkpoints/LSTM_no_dropout/best_validation_model.pt",  
+    "GRU_dropout_0.3": "models/checkpoints/GRU_dropout_0.3/best_validation_model.pt",   
+    "GRU_no_dropout": "models/checkpoints/GRU_no_dropout/best_validation_model.pt"     
+}
 
-with torch.no_grad():  # Disable gradient calculation for evaluation
-    output, hidden = model(x, hidden)  # Forward pass
-    
-    # Reshape output and targets for CrossEntropyLoss
-    output = output.view(-1, vocab_size)  # Shape: (batch_size * seq_length, vocab_size)
-    y = y.view(-1)  # Shape: (batch_size * seq_length)
-    
-    # Compute the cross-entropy loss
-    loss = criterion(output, y)
-    
-    # Compute perplexity
-    perplexity = torch.exp(loss)
+# Assuming hw2LSTM, batch_size, seq_length, hidden_dim, n_layers, vocab_size, embedding_dim, dropout_p, and device are defined
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+for model_name, checkpoint_path in checkpoint_paths.items():
+    print(f"Evaluating model: {model_name}")
+    try:
+        if "LSTM" in model_name:
+          rnn_type = "LSTM"
+          dropout_p = 0.3 if "dropout" in model_name else 0
+        else: #GRU
+          rnn_type = "GRU"
+          dropout_p = 0.3 if "dropout" in model_name else 0
+        model = hw2LSTM(batch_size, seq_length, hidden_dim, n_layers, vocab_size, embedding_dim, dropout_p, device, rnn_type=rnn_type, checkpoint=checkpoint_path)
+        model.eval()  # Set the model to evaluation mode
+
+        perplexity = evaluate(encoded_test, test_labels, model, batch_size, device)
+        print(f"Perplexity of {model_name}: {perplexity}")
+        print("Evaluation complete.")
+
+    except FileNotFoundError:
+        print(f"Error: Checkpoint file not found for {model_name} at {checkpoint_path}")
+    except Exception as e:
+        print(f"An error occurred during evaluation of {model_name}: {e}")
 
 ```
 
@@ -236,12 +241,12 @@ GRU with dropout performed similarly to LSTM with dropout, with validation perpl
 
 ### Comparison
 
-| Model                       | Train Perplexity | Validation Perplexity |
-|-----------------------------|----------------|--------------|
-| LSTM without Dropout              | 43.2         | 154.7       |  
-| LSTM with Dropout         | 71.07      | 121.4       |
-| GRU without Dropout | 38.48    | 146.9      | 
-| GRU with Dropout    | 64.92        | 132.3       |  
+| Model                       | Train Perplexity | Validation Perplexity |  Test Perplexity |
+|-----------------------------|----------------|--------------|--------------|
+| LSTM without Dropout              | 43.2         | 154.7       | 149.21  |
+| LSTM with Dropout         | 71.07      | 121.4       | 117.43 |
+| GRU without Dropout | 38.48    | 146.9      |  142.10 |
+| GRU with Dropout    | 64.92        | 132.3       | 127.32 |  
 
 ## References
 - **Recurrent Neural Network Regularization by Zaremba et al. (2014)**:
