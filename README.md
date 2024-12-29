@@ -4,11 +4,7 @@ This repository includes an implementation and replication of the "Recurrent Neu
 
 # RNN Regularization by Zaremba et al. (2014)
 
-This repository includes an implementation and replication of the "Recurrent Neural Network Regularization" paper by Zaremba et al. (2014). The models are trained and evaluated using the Penn Tree Bank (PTB) dataset.
-
 This project was completed as part of the homework for the Deep Learning course (0510725502) at Tel Aviv University.
-
-The implemented models are LSTM and GRU, both with and without dropout.
 
 ## Table of Contents
 - [Overview](#Overview)
