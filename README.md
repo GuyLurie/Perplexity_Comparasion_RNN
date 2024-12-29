@@ -17,7 +17,6 @@ The implemented models are LSTM and GRU, both with and without dropout.
 - [Training](#training)
 - [Evaluation](#evaluation)
 - [Results](#results)
-- [Acknowledgements](#acknowledgements)
 
 ## Overview
 The codes evaluates performance on language modeling tasks when introducing dropout regularization for Recurrent Neural Networks (RNNs), particularly Long Short-Term Memory networks (LSTMs) and Gated Recurrent Unit (GRUs).
